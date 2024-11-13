@@ -3,26 +3,24 @@ import 'dart:async';
 import 'dart:convert';
 
 void main(){
-  String API_URL = "https://api.themoviedb.org/3/search/movie?";
-  String Query = "query=Guardians+of+the+galaxy&";
-  String API_KEY = "api_key=302852b0524e0a01498712a56f6c4d81";
-  fetchMovie(API_URL,Query,API_KEY);
-
+  fetchMovie("Guardians of the Galaxy");
 }
 
-Future<List<Movie>> fetchMovie(String Url,String Query, String APIKEY) async {
-  final response = await http.get(Uri.parse(Url + Query + APIKEY));
+Future<List<Movie>> fetchMovie(String query) async {
+  final String apiUrl = "https://api.themoviedb.org/3/search/movie";
+  final String apiKey = "302852b0524e0a01498712a56f6c4d81";
+  final url = Uri.parse('$apiUrl?query=$query&api_key=$apiKey');
+  final response = await http.get(url);
+
   final jsonResponse = json.decode(response.body);
   List<Movie> movies = [];
   for (int i = 0; i < jsonResponse['results'].length; i++) {
     Movie movie = new Movie(title: jsonResponse['results'][i]['title'], releaseDate: jsonResponse['results'][i]['release_date'], tagline: jsonResponse['results'][i]['overview']);
     movies.add(movie);
+    print(movie.toString());
   }
-  for (int i = 0; i < movies.length; i++) {
-    print(movies[i].title);
-    print(movies[i].releaseDate);
-    print(movies[i].tagline);
-  }
+  print(movies.length);
+
   return movies;
 }
 
@@ -36,4 +34,8 @@ class Movie {
     required this.releaseDate,
     required this.tagline
 });
+  @override
+  String toString() {
+    return "${title} \n${releaseDate} \n${tagline}";
+  }
 }
