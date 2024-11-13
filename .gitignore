@@ -1,0 +1,6 @@
+
+*.xml
+.idea/libraries/Dart_SDK.xml
+
+# Project exclude paths
+/.dart_tool/
