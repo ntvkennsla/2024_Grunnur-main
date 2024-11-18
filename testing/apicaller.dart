@@ -3,9 +3,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+enum SearchType { movie, person, tv, multi}
 
 void main(){
-  String QueryParameter = "multi";
+  SearchType QueryParameter = SearchType.multi;
   print("What would you like to search for?");
   print("1. Movie");
   print("2. Person");
@@ -13,16 +14,16 @@ void main(){
   String inputQuestion = stdin.readLineSync().toString();
   switch(inputQuestion) {
     case "1":
-      QueryParameter = "movie";
+      QueryParameter = SearchType.movie;
         break;
     case "2":
-      QueryParameter = "person";
+      QueryParameter = SearchType.person;
       break;
     case "3":
-      QueryParameter = "tv";
+      QueryParameter = SearchType.tv;
       break;
     default:
-      QueryParameter = "multi";
+      QueryParameter = SearchType.multi;
   }
 
   print("Enter Name of $QueryParameter:");
@@ -30,22 +31,22 @@ void main(){
   fetchData(input1,QueryParameter);
 }
 
-void fetchData(String query, String parameter) async {
-  final String apiUrl = "https://api.themoviedb.org/3/search/$parameter";
+void fetchData(String query, SearchType parameter) async {
+  final String apiUrl = "https://api.themoviedb.org/3/search/${parameter.name}";
   final String apiKey = "302852b0524e0a01498712a56f6c4d81";
   final url = Uri.parse('$apiUrl?query=$query&api_key=$apiKey');
   final response = await http.get(url);
   print(url);
   final jsonResponse = json.decode(response.body);
   switch(parameter) {
-    case "movie":
+    case SearchType.movie:
       fetchMovie(jsonResponse);
       break;
-    case "person":
+    case SearchType.person:
       fetchActor(jsonResponse);
       break;
-    case "3":
-      print("Coming Soon");
+    case SearchType.tv:
+      fetchTV(jsonResponse);
       break;
     default:
       print("Coming Soon");
@@ -53,8 +54,11 @@ void fetchData(String query, String parameter) async {
 }
 void fetchMovie(dynamic jsonResponse){
   List<Movie> movies = [];
+
   for (int i = 0; i < jsonResponse['results'].length; i++) {
-    Movie movie = new Movie(title: jsonResponse['results'][i]['title'], releaseDate: jsonResponse['results'][i]['release_date'], tagline: jsonResponse['results'][i]['overview']);
+    Movie movie = new Movie(title: jsonResponse['results'][i]['title'],
+        releaseDate: jsonResponse['results'][i]['release_date'],
+        tagline: jsonResponse['results'][i]['overview']);
     movies.add(movie);
     print(movie.toString());
   }
@@ -62,12 +66,29 @@ void fetchMovie(dynamic jsonResponse){
 void fetchActor(dynamic jsonResponse){
   List<Actor> actors = [];
   for (int i = 0; i < jsonResponse['results'].length; i++) {
-    Actor actor = new Actor(name: jsonResponse['results'][i]['name'], gender: jsonResponse['results'][i]['gender'].toString(), known_for_department: jsonResponse['results'][i]['known_for_department']);
+    List<dynamic> known_for =  jsonResponse['results'][i]['known_for'];
+    String known_for_result = "";
+    for(int k = 0;k < known_for.length; k++) {
+      known_for_result += known_for[k]['title'] + ",";
+    }
+    Actor actor = new Actor(
+        name: jsonResponse['results'][i]['name'],
+        gender: jsonResponse['results'][i]['gender']  == 1 ? "Female" : "Male",
+        known_for_department: known_for_result,
+
+    );
     actors.add(actor);
     print(actor.toString());
   }
 }
-
+void fetchTV(dynamic jsonResponse){
+  List<TV> tvs = [];
+  for (int i = 0; i < jsonResponse['results'].length; i++) {
+    TV tv = new TV(name: jsonResponse['results'][i]['name'], first_air_date: jsonResponse['results'][i]['first_air_date'].toString(), overview: jsonResponse['results'][i]['overview']);
+    tvs.add(tv);
+    print(tvs.toString());
+  }
+}
 
 class Movie {
   final String title;
@@ -99,4 +120,19 @@ class Actor {
   String toString() {
     return "${name} \n${gender} \n${known_for_department}";
   }
+}
+class TV {
+final String name;
+final String first_air_date;
+final String overview;
+
+TV({
+  required this.name,
+  required this.first_air_date,
+  required this.overview
+});
+@override
+String toString() {
+  return "${name} \n${first_air_date} \n${overview}";
+}
 }
